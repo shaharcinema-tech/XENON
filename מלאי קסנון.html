@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מערכת ניהול מלאי מנורות קסנון - רשת בתי קולנוע</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Heebo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Heebo', sans-serif;
+    }
+    
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    /* Print Styles */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 10mm;
+      }
+      body {
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .table-container {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      th, td {
+        border: 1px solid #4b5563 !important;
+        padding: 5px 6px !important;
+        color: #000 !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-amber-500 selection:text-white">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-3 rounded-xl shadow-2xl text-sm font-semibold transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px]">
+    <span id="toast-icon"></span>
+    <span id="toast-msg"></span>
+  </div>
+
+  <!-- Header -->
+  <header class="no-print bg-slate-950/90 border-b border-slate-800/80 sticky top-0 z-30 backdrop-blur-md shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-slate-950 shadow-md shadow-amber-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold text-white tracking-tight">מערכת ניהול מלאי מנורות קסנון</h1>
+            <span class="text-[11px] bg-amber-500/10 text-amber-400 font-semibold px-2.5 py-0.5 rounded-full border border-amber-500/30">מערך הקרנה</span>
+          </div>
+          <p class="text-xs text-slate-400">רשת פלאנט ורב חן • ניהול נורות קסנון</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center flex-wrap gap-2">
+        <button onclick="openAddStockModal()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-emerald-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg shadow-sm shadow-emerald-500/20 transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+          הכנסת מלאי למחסן
+        </button>
+
+        <button onclick="openTransferModal()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-sky-950 bg-sky-400 hover:bg-sky-300 rounded-lg shadow-sm shadow-sky-500/20 transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+          העברה לסניף
+        </button>
+
+        <button onclick="openReplaceModal()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-amber-950 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-sm shadow-amber-500/20 transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          דיווח החלפה בסניף
+        </button>
+
+        <button onclick="openCollectModal()" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-purple-950 bg-purple-300 hover:bg-purple-200 rounded-lg shadow-sm shadow-purple-500/20 transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+          איסוף משומשות
+        </button>
+
+        <div class="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
+
+        <button onclick="exportToCSV()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition" title="ייצוא קובץ Excel">
+          <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        </button>
+
+        <button onclick="window.print()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition" title="הדפסה">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Printable Header -->
+  <div class="hidden print-only mb-6 border-b pb-4 text-black">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-black">דוח מעקב מנורות קסנון</h1>
+        <p class="text-sm">רשת פלאנט ורב חן • מעקב מלאי מנורות</p>
+      </div>
+      <div class="text-left text-xs">
+        <div>תאריך הדפסה: <span id="print-date"></span></div>
+        <div>שעת הפקה: <span id="print-time"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col gap-6">
+
+    <!-- KPI Summary Cards -->
+    <div class="no-print grid grid-cols-2 md:grid-cols-4 gap-4">
+      
+      <!-- Warehouse Active Stock -->
+      <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/80 shadow-md flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-400 block mb-0.5">מלאי תקין במחסן הרצליה</span>
+          <span id="kpi-wh-stock" class="text-2xl sm:text-3xl font-extrabold text-amber-400">0</span>
+          <span class="text-[11px] text-slate-500 block mt-0.5">זמין לניפוק לסניפים</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Branches Active Stock -->
+      <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/80 shadow-md flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-400 block mb-0.5">מלאי תקין בסניפים</span>
+          <span id="kpi-branches-stock" class="text-2xl sm:text-3xl font-extrabold text-sky-400">0</span>
+          <span class="text-[11px] text-slate-500 block mt-0.5">ב-8 מתחמי קולנוע</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Used Pending Collection -->
+      <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/80 shadow-md flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-400 block mb-0.5">משומשות בהמתנה לאיסוף</span>
+          <span id="kpi-used-total" class="text-2xl sm:text-3xl font-extrabold text-rose-400">0</span>
+          <span class="text-[11px] text-rose-400/80 block mt-0.5">דורש תיאום פינוי</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        </div>
+      </div>
+
+      <!-- Operations / Movements Logged -->
+      <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/80 shadow-md flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-400 block mb-0.5">סה"כ תנועות שבוצעו</span>
+          <span id="kpi-trans-count" class="text-2xl sm:text-3xl font-extrabold text-emerald-400">0</span>
+          <span class="text-[11px] text-slate-500 block mt-0.5">מתועד ביומן המערכת</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="no-print flex items-center gap-2 border-b border-slate-800 pb-2">
+      <button onclick="switchTab('active-stock')" id="tab-btn-active-stock" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-slate-950 transition flex items-center gap-2 shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        מלאי מנורות תקינות (חדשות)
+      </button>
+
+      <button onclick="switchTab('used-stock')" id="tab-btn-used-stock" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition flex items-center gap-2">
+        <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        מנורות משומשות בהמתנה לאיסוף
+        <span id="tab-badge-used" class="px-2 py-0.5 text-xs rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">0</span>
+      </button>
+
+      <button onclick="switchTab('history-log')" id="tab-btn-history-log" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        יומן תנועות והיסטוריה
+      </button>
+    </div>
+
+    <!-- TAB 1: Active Stock Table -->
+    <div id="tab-pane-active-stock" class="tab-pane flex flex-col gap-4">
+      <div class="bg-slate-800/90 rounded-2xl border border-slate-700/80 shadow-md overflow-hidden table-container">
+        
+        <div class="p-4 sm:px-6 bg-slate-800 border-b border-slate-700 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <h2 class="font-bold text-slate-100 text-sm sm:text-base">מלאי תקין פעיל (מחסן הרצליה + סניפים)</h2>
+            <span class="text-xs text-slate-400 hidden sm:inline">(עריכת כמויות ישירה בתאים או באמצעות כפתורי הפעולה)</span>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400">
+            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500"></span> מחסן ראשי</span>
+            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-slate-700 border border-slate-500"></span> סניף קולנוע</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-right text-sm border-collapse">
+            <thead>
+              <tr class="bg-slate-900 text-slate-300 text-xs uppercase font-semibold border-b border-slate-700">
+                <th scope="col" class="py-3 px-4 sticky right-0 z-20 bg-slate-900 min-w-[170px] text-right font-bold text-white border-l border-slate-800">מיקום / סניף</th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold text-slate-200">CDXL-60UP<span class="block text-[10px] text-slate-400 font-normal">6.0kW</span></th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold text-slate-200">CDXL-60SP<span class="block text-[10px] text-slate-400 font-normal">6.0kW</span></th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold text-slate-200">CDXL-45SP<span class="block text-[10px] text-slate-400 font-normal">4.5kW</span></th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold text-slate-200">CDXL-30SP<span class="block text-[10px] text-slate-400 font-normal">3.0kW</span></th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold text-slate-200">CDXL-20SP<span class="block text-[10px] text-slate-400 font-normal">2.0kW</span></th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold text-slate-200">CDXL-20<span class="block text-[10px] text-slate-400 font-normal">2.0kW</span></th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold text-slate-200">אחר<span class="block text-[10px] text-slate-400 font-normal">מיוחד</span></th>
+                <th scope="col" class="py-3 px-4 text-center min-w-[110px] font-black text-amber-300 bg-slate-950 border-r border-slate-800">סה"כ לסניף</th>
+              </tr>
+            </thead>
+            <tbody id="active-inventory-tbody" class="divide-y divide-slate-700/60">
+              <!-- Dynamically populated -->
+            </tbody>
+            <tfoot class="border-t-2 border-slate-600 bg-slate-900 font-bold text-white">
+              <tr id="active-total-row" class="text-sm">
+                <td class="py-3.5 px-4 sticky right-0 z-20 bg-slate-900 font-extrabold text-amber-400 border-l border-slate-800">סה"כ ארצי תקין</td>
+                <td id="act-col-cdxl60up" class="py-3 px-2 text-center text-slate-100 font-bold bg-slate-900/90">0</td>
+                <td id="act-col-cdxl60sp" class="py-3 px-2 text-center text-slate-100 font-bold bg-slate-900/90">0</td>
+                <td id="act-col-cdxl45sp" class="py-3 px-2 text-center text-slate-100 font-bold bg-slate-900/90">0</td>
+                <td id="act-col-cdxl30sp" class="py-3 px-2 text-center text-slate-100 font-bold bg-slate-900/90">0</td>
+                <td id="act-col-cdxl20sp" class="py-3 px-2 text-center text-slate-100 font-bold bg-slate-900/90">0</td>
+                <td id="act-col-cdxl20"   class="py-3 px-2 text-center text-slate-100 font-bold bg-slate-900/90">0</td>
+                <td id="act-col-other"    class="py-3 px-2 text-center text-slate-100 font-bold bg-slate-900/90">0</td>
+                <td id="act-grand-total"  class="py-3.5 px-4 text-center text-base font-black text-amber-400 bg-slate-950 border-r border-slate-800">0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Used Stock Table (Awaiting Pickup) -->
+    <div id="tab-pane-used-stock" class="tab-pane hidden flex flex-col gap-4">
+      <div class="bg-slate-800/90 rounded-2xl border border-rose-900/40 shadow-md overflow-hidden table-container">
+        
+        <div class="p-4 sm:px-6 bg-rose-950/30 border-b border-rose-900/50 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
+            <div>
+              <h2 class="font-bold text-rose-200 text-sm sm:text-base">מנורות משומשות שפורקו בסניפים וממתינות לאיסוף</h2>
+              <p class="text-xs text-rose-300/70">כאשר סניף מדווח על החלפת מנורה, המלאי התקין שלו קטן ב-1 והנורה המשומשת מתווספת לכאן עד לאיסוף</p>
+            </div>
+          </div>
+          
+          <button onclick="openCollectModal()" class="px-3 py-1.5 text-xs font-semibold text-rose-950 bg-rose-300 hover:bg-rose-200 rounded-lg transition shadow-sm">
+            רישום איסוף / פינוי משומשות
+          </button>
+        </div>
+
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-right text-sm border-collapse">
+            <thead>
+              <tr class="bg-slate-900/90 text-rose-300 text-xs uppercase font-semibold border-b border-rose-900/30">
+                <th scope="col" class="py-3 px-4 sticky right-0 z-20 bg-slate-900 min-w-[170px] text-right font-bold text-rose-200 border-l border-slate-800">סניף / מיקום</th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold">CDXL-60UP</th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold">CDXL-60SP</th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold">CDXL-45SP</th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold">CDXL-30SP</th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold">CDXL-20SP</th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold">CDXL-20</th>
+                <th scope="col" class="py-3 px-2 text-center min-w-[95px] font-bold">אחר</th>
+                <th scope="col" class="py-3 px-4 text-center min-w-[120px] font-black text-rose-300 bg-rose-950/40 border-r border-rose-900/40">סה"כ משומשות</th>
+                <th scope="col" class="py-3 px-3 text-center min-w-[100px] no-print text-slate-400">פעולות</th>
+              </tr>
+            </thead>
+            <tbody id="used-inventory-tbody" class="divide-y divide-rose-950/30">
+              <!-- Dynamically populated -->
+            </tbody>
+            <tfoot class="border-t-2 border-rose-900 bg-slate-900 font-bold text-white">
+              <tr class="text-sm">
+                <td class="py-3.5 px-4 sticky right-0 z-20 bg-slate-900 font-extrabold text-rose-400 border-l border-slate-800">סה"כ מנורות לאיסוף</td>
+                <td id="used-col-cdxl60up" class="py-3 px-2 text-center text-rose-200 font-bold bg-slate-900">0</td>
+                <td id="used-col-cdxl60sp" class="py-3 px-2 text-center text-rose-200 font-bold bg-slate-900">0</td>
+                <td id="used-col-cdxl45sp" class="py-3 px-2 text-center text-rose-200 font-bold bg-slate-900">0</td>
+                <td id="used-col-cdxl30sp" class="py-3 px-2 text-center text-rose-200 font-bold bg-slate-900">0</td>
+                <td id="used-col-cdxl20sp" class="py-3 px-2 text-center text-rose-200 font-bold bg-slate-900">0</td>
+                <td id="used-col-cdxl20"   class="py-3 px-2 text-center text-rose-200 font-bold bg-slate-900">0</td>
+                <td id="used-col-other"    class="py-3 px-2 text-center text-rose-200 font-bold bg-slate-900">0</td>
+                <td id="used-grand-total"  class="py-3.5 px-4 text-center text-base font-black text-rose-400 bg-rose-950/50 border-r border-rose-900">0</td>
+                <td class="no-print bg-slate-900"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: History & Movement Log -->
+    <div id="tab-pane-history-log" class="tab-pane hidden flex flex-col gap-4">
+      <div class="bg-slate-800/90 rounded-2xl border border-slate-700/80 shadow-md overflow-hidden">
+        
+        <div class="p-4 sm:px-6 bg-slate-800 border-b border-slate-700 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            <h2 class="font-bold text-slate-100 text-sm sm:text-base">יומן תנועות מלא (Audit Log)</h2>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="clearHistoryLog()" class="px-3 py-1.5 text-xs text-rose-300 hover:text-white hover:bg-rose-900/40 rounded-lg border border-rose-800/40 transition">
+              נקה יומן תנועות
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto w-full">
+          <table class="w-full text-right text-sm">
+            <thead class="bg-slate-900 text-slate-400 text-xs uppercase border-b border-slate-700">
+              <tr>
+                <th class="py-3 px-4">תאריך ושעה</th>
+                <th class="py-3 px-4">סוג פעולה</th>
+                <th class="py-3 px-4">מיקום / סניף</th>
+                <th class="py-3 px-4">דגם מנורה</th>
+                <th class="py-3 px-4 text-center">כמות</th>
+                <th class="py-3 px-4">פרטים / סימוכין</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody" class="divide-y divide-slate-700/60 text-slate-200">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Signatures for Print -->
+    <div class="hidden print-only mt-8 pt-4 border-t border-gray-400 text-black">
+      <div class="grid grid-cols-3 gap-6 text-xs">
+        <div>
+          <span class="font-bold">שם האוסף:</span> ___________________
+          <div class="mt-2 font-bold">חתימה:</div>
+        </div>
+        <div>
+          <span class="font-bold">שם הטכנאי:</span> ___________________
+          <div class="mt-2 font-bold">חתימה:</div>
+        </div>
+        <div>
+          <span class="font-bold">הערות לסבב איסוף:</span>
+          <div class="border-b border-gray-300 mt-4"></div>
+          <div class="border-b border-gray-300 mt-4"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL 1: הכנסת מלאי למחסן -->
+  <div id="modal-add-stock" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-700 scale-95 transition-transform duration-200" id="modal-box-add">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+          </div>
+          <h3 class="text-base font-bold text-white">קליטת מנורות למחסן הרצליה</h3>
+        </div>
+        <button onclick="closeModal('modal-add-stock')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <form onsubmit="handleAddStock(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">דגם מנורת קסנון</label>
+          <select id="add-model-select" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <!-- options via JS -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">כמות יחידות לקליטה</label>
+          <input type="number" id="add-quantity-input" min="1" max="500" value="1" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">תעודת משלוח / ספק / הערות</label>
+          <input type="text" id="add-notes-input" placeholder="למשל: ספק כריסטי - ת.משלוח 9821" class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('modal-add-stock')" class="px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 rounded-lg">ביטול</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg shadow-md transition">קלוט למלאי מחסן</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: העברה מהמחסן לסניף -->
+  <div id="modal-transfer" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-700 scale-95 transition-transform duration-200" id="modal-box-transfer">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+          </div>
+          <h3 class="text-base font-bold text-white">העברת מנורות ממחסן הרצליה לסניף</h3>
+        </div>
+        <button onclick="closeModal('modal-transfer')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <form onsubmit="handleTransfer(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">סניף יעד</label>
+          <select id="transfer-branch-select" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-sky-500">
+            <!-- Cinema branches only -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">דגם מנורה</label>
+          <select id="transfer-model-select" onchange="updateTransferAvailability()" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-sky-500">
+            <!-- options via JS -->
+          </select>
+          <div class="text-[11px] text-amber-400 mt-1" id="transfer-available-hint">מלאי זמין במחסן הרצליה: 0</div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">כמות יחידות להעברה</label>
+          <input type="number" id="transfer-quantity-input" min="1" max="100" value="1" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-sky-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">שם שליח / טכנאי / הערות</label>
+          <input type="text" id="transfer-notes-input" placeholder="למשל: דחוף - נשלח עם טכנאי ראשי" class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-sky-500">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('modal-transfer')" class="px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 rounded-lg">ביטול</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg shadow-md transition">בצע העברה</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: דיווח החלפת מנורה בסניף -->
+  <div id="modal-replace" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-700 scale-95 transition-transform duration-200" id="modal-box-replace">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          </div>
+          <h3 class="text-base font-bold text-white">דיווח החלפת נורה בסניף</h3>
+        </div>
+        <button onclick="closeModal('modal-replace')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <div class="p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 leading-relaxed">
+        <strong>שים לב:</strong> דיווח על החלפה יגרע אוטומטית מנורה תקינה אחת ממלאי הסניף, ויעביר נורה משומשת לרשימת ההמתנה לאיסוף.
+      </div>
+
+      <form onsubmit="handleReplace(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">סניף שבו בוצעה ההחלפה</label>
+          <select id="replace-branch-select" onchange="updateReplaceAvailability()" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-amber-500">
+            <!-- Cinema branches only -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">דגם המנורה שהוחלפה</label>
+          <select id="replace-model-select" onchange="updateReplaceAvailability()" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-amber-500">
+            <!-- Lamp models -->
+          </select>
+          <div class="text-[11px] text-sky-400 mt-1" id="replace-available-hint">מלאי תקין זמין בסניף זה: 0</div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">מספר אולם / מקרן</label>
+          <input type="text" id="replace-hall-input" placeholder="למשל: אולם 3 / כריסטי CP4230" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-amber-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">סיבת החלפה / שעות עבודה</label>
+          <input type="text" id="replace-reason-input" placeholder="למשל: סיימה 1,480 שעות (סוף חיים תקני)" class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-amber-500">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('modal-replace')" class="px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 rounded-lg">ביטול</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg shadow-md transition">בצע עדכון וגריעה</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 4: איסוף מנורות משומשות -->
+  <div id="modal-collect" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-700 scale-95 transition-transform duration-200" id="modal-box-collect">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+          </div>
+          <h3 class="text-base font-bold text-white">רישום איסוף מנורות משומשות</h3>
+        </div>
+        <button onclick="closeModal('modal-collect')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <form onsubmit="handleCollect(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">סניף לאיסוף</label>
+          <select id="collect-branch-select" onchange="updateCollectModels()" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-purple-500">
+            <!-- Cinema branches only -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">דגם מנורה לאיסוף</label>
+          <select id="collect-model-select" onchange="updateCollectQtyHint()" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-purple-500">
+            <!-- filtered by availability in that branch -->
+          </select>
+          <div class="text-[11px] text-rose-300 mt-1" id="collect-available-hint">משומשות הממתינות בסניף: 0</div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">כמות יחידות שנאספו</label>
+          <input type="number" id="collect-quantity-input" min="1" max="100" value="1" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-purple-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">יעד הפינוי / תעודת פינוי</label>
+          <input type="text" id="collect-dest-input" placeholder="למשל: נאסף לגריטה / הוחזר למחסן ראשי" required class="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-purple-500">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('modal-collect')" class="px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 rounded-lg">ביטול</button>
+          <button type="submit" class="px-4 py-2 text-xs font-semibold bg-purple-400 hover:bg-purple-300 text-slate-950 rounded-lg shadow-md transition">אשר איסוף</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // System Master Data
+    const LOCATIONS = [
+      { id: 'herzliya', name: 'מחסן הרצליה', isWarehouse: true, badge: 'מחסן ראשי' },
+      { id: 'haifa', name: 'פלאנט חיפה', isWarehouse: false, badge: 'קולנוע' },
+      { id: 'zikhron', name: 'פלאנט זכרון יעקב', isWarehouse: false, badge: 'קולנוע' },
+      { id: 'rishon', name: 'פלאנט רשל"צ', isWarehouse: false, badge: 'קולנוע' },
+      { id: 'ayalon', name: 'פלאנט איילון', isWarehouse: false, badge: 'קולנוע' },
+      { id: 'jerusalem', name: 'פלאנט ירושלים', isWarehouse: false, badge: 'קולנוע' },
+      { id: 'beer_sheva', name: 'פלאנט באר שבע', isWarehouse: false, badge: 'קולנוע' },
+      { id: 'dizengoff', name: 'רב חן דיזינגוף', isWarehouse: false, badge: 'קולנוע' },
+      { id: 'givatayim', name: 'רב חן גבעתיים', isWarehouse: false, badge: 'קולנוע' }
+    ];
+
+    const LAMP_KEYS = ['cdxl60up', 'cdxl60sp', 'cdxl45sp', 'cdxl30sp', 'cdxl20sp', 'cdxl20', 'other'];
+
+    const LAMP_NAMES = {
+      cdxl60up: 'CDXL-60UP',
+      cdxl60sp: 'CDXL-60SP',
+      cdxl45sp: 'CDXL-45SP',
+      cdxl30sp: 'CDXL-30SP',
+      cdxl20sp: 'CDXL-20SP',
+      cdxl20: 'CDXL-20',
+      other: 'אחר'
+    };
+
+    // Realistic Default Data
+    const DEFAULT_DATA = {
+      active: {
+        herzliya:   { cdxl60up: 12, cdxl60sp: 8, cdxl45sp: 16, cdxl30sp: 20, cdxl20sp: 14, cdxl20: 8, other: 4 },
+        haifa:      { cdxl60up: 2, cdxl60sp: 1, cdxl45sp: 3,  cdxl30sp: 2,  cdxl20sp: 2,  cdxl20: 0, other: 1 },
+        zikhron:    { cdxl60up: 1, cdxl60sp: 0, cdxl45sp: 2,  cdxl30sp: 2,  cdxl20sp: 1,  cdxl20: 1, other: 0 },
+        rishon:     { cdxl60up: 3, cdxl60sp: 2, cdxl45sp: 4,  cdxl30sp: 3,  cdxl20sp: 2,  cdxl20: 1, other: 2 },
+        ayalon:     { cdxl60up: 2, cdxl60sp: 2, cdxl45sp: 3,  cdxl30sp: 2,  cdxl20sp: 2,  cdxl20: 0, other: 0 },
+        jerusalem:  { cdxl60up: 2, cdxl60sp: 1, cdxl45sp: 3,  cdxl30sp: 3,  cdxl20sp: 1,  cdxl20: 0, other: 1 },
+        beer_sheva: { cdxl60up: 2, cdxl60sp: 1, cdxl45sp: 2,  cdxl30sp: 2,  cdxl20sp: 1,  cdxl20: 0, other: 0 },
+        dizengoff:  { cdxl60up: 0, cdxl60sp: 0, cdxl45sp: 1,  cdxl30sp: 2,  cdxl20sp: 2,  cdxl20: 1, other: 0 },
+        givatayim:  { cdxl60up: 0, cdxl60sp: 0, cdxl45sp: 2,  cdxl30sp: 2,  cdxl20sp: 1,  cdxl20: 1, other: 0 }
+      },
+      used: {
+        herzliya:   { cdxl60up: 0, cdxl60sp: 0, cdxl45sp: 0, cdxl30sp: 0, cdxl20sp: 0, cdxl20: 0, other: 0 },
+        haifa:      { cdxl60up: 1, cdxl60sp: 0, cdxl45sp: 1, cdxl30sp: 0, cdxl20sp: 0, cdxl20: 0, other: 0 },
+        zikhron:    { cdxl60up: 0, cdxl60sp: 0, cdxl45sp: 0, cdxl30sp: 1, cdxl20sp: 0, cdxl20: 0, other: 0 },
+        rishon:     { cdxl60up: 1, cdxl60sp: 1, cdxl45sp: 0, cdxl30sp: 1, cdxl20sp: 1, cdxl20: 0, other: 0 },
+        ayalon:     { cdxl60up: 0, cdxl60sp: 1, cdxl45sp: 1, cdxl30sp: 0, cdxl20sp: 0, cdxl20: 0, other: 0 },
+        jerusalem:  { cdxl60up: 0, cdxl60sp: 0, cdxl45sp: 2, cdxl30sp: 0, cdxl20sp: 0, cdxl20: 0, other: 0 },
+        beer_sheva: { cdxl60up: 1, cdxl60sp: 0, cdxl45sp: 0, cdxl30sp: 0, cdxl20sp: 0, cdxl20: 0, other: 0 },
+        dizengoff:  { cdxl60up: 0, cdxl60sp: 0, cdxl45sp: 0, cdxl30sp: 1, cdxl20sp: 0, cdxl20: 0, other: 0 },
+        givatayim:  { cdxl60up: 0, cdxl60sp: 0, cdxl45sp: 0, cdxl30sp: 0, cdxl20sp: 1, cdxl20: 0, other: 0 }
+      },
+      history: [
+        {
+          id: 1,
+          time: new Date(Date.now() - 3600000 * 24).toLocaleString('he-IL'),
+          type: 'add_stock',
+          typeBadge: 'קליטה למחסן',
+          badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+          site: 'מחסן הרצליה',
+          lamp: 'CDXL-45SP',
+          qty: 10,
+          notes: 'משלוח יבואן כריסטי'
+        },
+        {
+          id: 2,
+          time: new Date(Date.now() - 3600000 * 18).toLocaleString('he-IL'),
+          type: 'transfer',
+          typeBadge: 'העברה לסניף',
+          badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+          site: 'פלאנט רשל"צ',
+          lamp: 'CDXL-60UP',
+          qty: 2,
+          notes: 'השלמת מלאי לאולם IMAX'
+        },
+        {
+          id: 3,
+          time: new Date(Date.now() - 3600000 * 6).toLocaleString('he-IL'),
+          type: 'replacement',
+          typeBadge: 'החלפה בסניף',
+          badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+          site: 'פלאנט רשל"צ',
+          lamp: 'CDXL-60UP',
+          qty: 1,
+          notes: 'אולם IMAX - נורה סיימה 1,520 שעות'
+        }
+      ]
+    };
+
+    let state = {
+      active: {},
+      used: {},
+      history: []
+    };
+
+    // Load Data
+    function loadState() {
+      try {
+        const stored = localStorage.getItem('xenon_mgmt_system_v2');
+        if (stored) {
+          state = JSON.parse(stored);
+        } else {
+          state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        }
+      } catch (e) {
+        state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem('xenon_mgmt_system_v2', JSON.stringify(state));
+      } catch (e) {
+        console.warn('LocalStorage error', e);
+      }
+      renderAll();
+    }
+
+    // UI Toast Notification
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+
+      toastMsg.innerText = msg;
+      if (isSuccess) {
+        toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-3 rounded-xl shadow-2xl text-sm font-semibold transition-all duration-300 bg-emerald-900/90 text-emerald-100 border border-emerald-600 backdrop-blur-md opacity-100 translate-y-0';
+        toastIcon.innerHTML = `<svg class="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>`;
+      } else {
+        toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-5 py-3 rounded-xl shadow-2xl text-sm font-semibold transition-all duration-300 bg-rose-900/90 text-rose-100 border border-rose-600 backdrop-blur-md opacity-100 translate-y-0';
+        toastIcon.innerHTML = `<svg class="w-5 h-5 text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+      }
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-[-20px]');
+      }, 3500);
+    }
+
+    // Tabs switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-500', 'text-slate-950', 'shadow-sm');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+
+      const activePane = document.getElementById(`tab-pane-${tabId}`);
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (activePane) activePane.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-800', 'text-slate-300');
+        activeBtn.classList.add('bg-amber-500', 'text-slate-950', 'shadow-sm');
+      }
+    }
+
+    // Modals handling
+    function openModal(modalId, boxId) {
+      const modal = document.getElementById(modalId);
+      const box = document.getElementById(boxId);
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        box.classList.remove('scale-95');
+        box.classList.add('scale-100');
+      }, 10);
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      const box = modal.querySelector('div[id^="modal-box-"]');
+      modal.classList.add('opacity-0');
+      if (box) {
+        box.classList.remove('scale-100');
+        box.classList.add('scale-95');
+      }
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 200);
+    }
+
+    // Render Active Stock Table
+    function renderActiveTable() {
+      const tbody = document.getElementById('active-inventory-tbody');
+      tbody.innerHTML = '';
+
+      let grandTotal = 0;
+      let whTotal = 0;
+      let branchesTotal = 0;
+      const colTotals = { cdxl60up: 0, cdxl60sp: 0, cdxl45sp: 0, cdxl30sp: 0, cdxl20sp: 0, cdxl20: 0, other: 0 };
+
+      LOCATIONS.forEach(loc => {
+        const row = document.createElement('tr');
+        row.className = loc.isWarehouse ? 'bg-amber-950/20 hover:bg-amber-950/40 transition' : 'hover:bg-slate-800/60 transition';
+
+        let rowSum = 0;
+        const locStock = state.active[loc.id] || {};
+
+        // Location header cell
+        const locTd = document.createElement('td');
+        locTd.className = `py-3 px-4 sticky right-0 z-10 border-l border-slate-800 font-medium ${
+          loc.isWarehouse ? 'bg-slate-900 text-amber-300 font-bold' : 'bg-slate-900/95 text-slate-100'
+        }`;
+        locTd.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm font-bold">${loc.name}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+              loc.isWarehouse ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'
+            }">${loc.badge}</span>
+          </div>
+        `;
+        row.appendChild(locTd);
+
+        // Model inputs
+        LAMP_KEYS.forEach(key => {
+          const val = parseInt(locStock[key] || 0, 10);
+          rowSum += val;
+          colTotals[key] += val;
+
+          const td = document.createElement('td');
+          td.className = 'py-2 px-1 text-center align-middle';
+
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.min = '0';
+          input.value = val;
+          input.dataset.loc = loc.id;
+          input.dataset.lamp = key;
+          input.className = `w-16 sm:w-20 mx-auto text-center py-1.5 px-1 rounded-md text-sm font-semibold transition border outline-none ${
+            val > 0 
+              ? 'bg-slate-800 text-white border-slate-700 hover:border-slate-500 focus:border-amber-400 focus:ring-1 focus:ring-amber-400' 
+              : 'bg-slate-900/60 text-slate-500 border-transparent hover:border-slate-700 focus:text-white focus:border-amber-400'
+          }`;
+
+          input.addEventListener('input', (e) => {
+            let newQty = parseInt(e.target.value, 10);
+            if (isNaN(newQty) || newQty < 0) newQty = 0;
+            state.active[loc.id][key] = newQty;
+            saveState();
+          });
+
+          td.appendChild(input);
+          row.appendChild(td);
+        });
+
+        // Row Total
+        const totalTd = document.createElement('td');
+        totalTd.className = `py-3 px-4 text-center font-bold border-r border-slate-800 ${
+          loc.isWarehouse ? 'text-amber-400 bg-amber-950/40 text-base' : 'text-slate-200 bg-slate-900/80'
+        }`;
+        totalTd.innerText = rowSum.toLocaleString('he-IL');
+        row.appendChild(totalTd);
+
+        tbody.appendChild(row);
+
+        if (loc.isWarehouse) {
+          whTotal += rowSum;
+        } else {
+          branchesTotal += rowSum;
+        }
+        grandTotal += rowSum;
+      });
+
+      // Update Column Totals
+      LAMP_KEYS.forEach(key => {
+        const el = document.getElementById(`act-col-${key}`);
+        if (el) el.innerText = colTotals[key].toLocaleString('he-IL');
+      });
+      document.getElementById('act-grand-total').innerText = grandTotal.toLocaleString('he-IL');
+
+      // KPIs
+      document.getElementById('kpi-wh-stock').innerText = whTotal.toLocaleString('he-IL');
+      document.getElementById('kpi-branches-stock').innerText = branchesTotal.toLocaleString('he-IL');
+    }
+
+    // Render Used Stock Table
+    function renderUsedTable() {
+      const tbody = document.getElementById('used-inventory-tbody');
+      tbody.innerHTML = '';
+
+      let usedGrandTotal = 0;
+      const colTotals = { cdxl60up: 0, cdxl60sp: 0, cdxl45sp: 0, cdxl30sp: 0, cdxl20sp: 0, cdxl20: 0, other: 0 };
+
+      // Branches only (Herzliya is warehouse)
+      const cinemaBranches = LOCATIONS.filter(l => !l.isWarehouse);
+
+      cinemaBranches.forEach(loc => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-slate-800/60 transition';
+
+        let rowSum = 0;
+        const locStock = state.used[loc.id] || {};
+
+        // Location cell
+        const locTd = document.createElement('td');
+        locTd.className = 'py-3 px-4 sticky right-0 z-10 border-l border-slate-800 font-medium bg-slate-900 text-slate-200';
+        locTd.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold">${loc.name}</span>
+            <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">${loc.badge}</span>
+          </div>
+        `;
+        row.appendChild(locTd);
+
+        LAMP_KEYS.forEach(key => {
+          const val = parseInt(locStock[key] || 0, 10);
+          rowSum += val;
+          colTotals[key] += val;
+
+          const td = document.createElement('td');
+          td.className = 'py-2 px-1 text-center align-middle';
+
+          const span = document.createElement('span');
+          span.className = `inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-lg text-xs font-bold ${
+            val > 0 ? 'bg-rose-950/70 text-rose-300 border border-rose-800/80' : 'text-slate-600'
+          }`;
+          span.innerText = val > 0 ? val : '-';
+
+          td.appendChild(span);
+          row.appendChild(td);
+        });
+
+        // Row Total
+        const totalTd = document.createElement('td');
+        totalTd.className = 'py-3 px-4 text-center font-bold text-rose-400 bg-rose-950/30 border-r border-rose-900/30';
+        totalTd.innerText = rowSum;
+        row.appendChild(totalTd);
+
+        // Actions cell
+        const actTd = document.createElement('td');
+        actTd.className = 'py-3 px-3 text-center no-print';
+        if (rowSum > 0) {
+          const btn = document.createElement('button');
+          btn.className = 'px-2.5 py-1 text-xs font-semibold text-rose-300 hover:text-white bg-rose-950/40 hover:bg-rose-900 border border-rose-800/50 rounded-lg transition';
+          btn.innerText = 'אסוף מסניף זה';
+          btn.onclick = () => openCollectModalForBranch(loc.id);
+          actTd.appendChild(btn);
+        } else {
+          actTd.innerHTML = '<span class="text-xs text-slate-600">אין בהמתנה</span>';
+        }
+        row.appendChild(actTd);
+
+        tbody.appendChild(row);
+        usedGrandTotal += rowSum;
+      });
+
+      // Update Column Totals
+      LAMP_KEYS.forEach(key => {
+        const el = document.getElementById(`used-col-${key}`);
+        if (el) el.innerText = colTotals[key].toLocaleString('he-IL');
+      });
+      document.getElementById('used-grand-total').innerText = usedGrandTotal.toLocaleString('he-IL');
+      document.getElementById('kpi-used-total').innerText = usedGrandTotal.toLocaleString('he-IL');
+      document.getElementById('tab-badge-used').innerText = usedGrandTotal.toLocaleString('he-IL');
+    }
+
+    // Render History Log
+    function renderHistory() {
+      const tbody = document.getElementById('history-tbody');
+      tbody.innerHTML = '';
+
+      document.getElementById('kpi-trans-count').innerText = state.history.length;
+
+      if (!state.history || state.history.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500 text-xs">אין תנועות מתועדות ביומן עדיין.</td></tr>`;
+        return;
+      }
+
+      state.history.slice(0, 50).forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition text-xs';
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-mono text-slate-400">${item.time}</td>
+          <td class="py-3 px-4">
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${item.badgeColor}">
+              ${item.typeBadge}
+            </span>
+          </td>
+          <td class="py-3 px-4 font-semibold text-white">${item.site}</td>
+          <td class="py-3 px-4 text-amber-300 font-bold">${item.lamp}</td>
+          <td class="py-3 px-4 text-center font-extrabold text-white text-sm">${item.qty}</td>
+          <td class="py-3 px-4 text-slate-400">${item.notes || '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderAll() {
+      renderActiveTable();
+      renderUsedTable();
+      renderHistory();
+      updateTimestamps();
+    }
+
+    // Modal Initializers
+    function populateSelects() {
+      // 1. Add Stock Modal
+      const addModelSel = document.getElementById('add-model-select');
+      addModelSel.innerHTML = '';
+      LAMP_KEYS.forEach(k => {
+        addModelSel.innerHTML += `<option value="${k}">${LAMP_NAMES[k]}</option>`;
+      });
+
+      // 2. Transfer Modal
+      const transferBranchSel = document.getElementById('transfer-branch-select');
+      transferBranchSel.innerHTML = '';
+      LOCATIONS.filter(l => !l.isWarehouse).forEach(l => {
+        transferBranchSel.innerHTML += `<option value="${l.id}">${l.name}</option>`;
+      });
+
+      const transferModelSel = document.getElementById('transfer-model-select');
+      transferModelSel.innerHTML = '';
+      LAMP_KEYS.forEach(k => {
+        transferModelSel.innerHTML += `<option value="${k}">${LAMP_NAMES[k]}</option>`;
+      });
+
+      // 3. Replace Modal
+      const replaceBranchSel = document.getElementById('replace-branch-select');
+      replaceBranchSel.innerHTML = '';
+      LOCATIONS.filter(l => !l.isWarehouse).forEach(l => {
+        replaceBranchSel.innerHTML += `<option value="${l.id}">${l.name}</option>`;
+      });
+
+      const replaceModelSel = document.getElementById('replace-model-select');
+      replaceModelSel.innerHTML = '';
+      LAMP_KEYS.forEach(k => {
+        replaceModelSel.innerHTML += `<option value="${k}">${LAMP_NAMES[k]}</option>`;
+      });
+
+      // 4. Collect Modal
+      const collectBranchSel = document.getElementById('collect-branch-select');
+      collectBranchSel.innerHTML = '';
+      LOCATIONS.filter(l => !l.isWarehouse).forEach(l => {
+        collectBranchSel.innerHTML += `<option value="${l.id}">${l.name}</option>`;
+      });
+    }
+
+    // Open Modal Handlers
+    function openAddStockModal() {
+      openModal('modal-add-stock', 'modal-box-add');
+    }
+
+    function openTransferModal() {
+      updateTransferAvailability();
+      openModal('modal-transfer', 'modal-box-transfer');
+    }
+
+    function openReplaceModal() {
+      updateReplaceAvailability();
+      openModal('modal-replace', 'modal-box-replace');
+    }
+
+    function openCollectModal() {
+      updateCollectModels();
+      openModal('modal-collect', 'modal-box-collect');
+    }
+
+    function openCollectModalForBranch(branchId) {
+      const sel = document.getElementById('collect-branch-select');
+      sel.value = branchId;
+      updateCollectModels();
+      openModal('modal-collect', 'modal-box-collect');
+    }
+
+    // Dynamic Availability Hints
+    function updateTransferAvailability() {
+      const lampKey = document.getElementById('transfer-model-select').value;
+      const whQty = (state.active['herzliya'] && state.active['herzliya'][lampKey]) ? state.active['herzliya'][lampKey] : 0;
+      const hint = document.getElementById('transfer-available-hint');
+      hint.innerText = `מלאי זמין במחסן הרצליה: ${whQty} יחידות`;
+      if (whQty === 0) {
+        hint.className = 'text-[11px] text-rose-400 mt-1 font-bold';
+      } else {
+        hint.className = 'text-[11px] text-amber-400 mt-1';
+      }
+    }
+
+    function updateReplaceAvailability() {
+      const branchId = document.getElementById('replace-branch-select').value;
+      const lampKey = document.getElementById('replace-model-select').value;
+      const branchQty = (state.active[branchId] && state.active[branchId][lampKey]) ? state.active[branchId][lampKey] : 0;
+      const hint = document.getElementById('replace-available-hint');
+      hint.innerText = `מלאי תקין זמין בסניף זה: ${branchQty} יחידות`;
+      if (branchQty === 0) {
+        hint.className = 'text-[11px] text-rose-400 mt-1 font-bold';
+      } else {
+        hint.className = 'text-[11px] text-emerald-400 mt-1 font-semibold';
+      }
+    }
+
+    function updateCollectModels() {
+      const branchId = document.getElementById('collect-branch-select').value;
+      const collectModelSel = document.getElementById('collect-model-select');
+      collectModelSel.innerHTML = '';
+
+      const branchUsed = state.used[branchId] || {};
+      LAMP_KEYS.forEach(k => {
+        const count = branchUsed[k] || 0;
+        collectModelSel.innerHTML += `<option value="${k}">${LAMP_NAMES[k]} (${count} בהמתנה)</option>`;
+      });
+
+      updateCollectQtyHint();
+    }
+
+    function updateCollectQtyHint() {
+      const branchId = document.getElementById('collect-branch-select').value;
+      const lampKey = document.getElementById('collect-model-select').value;
+      const count = (state.used[branchId] && state.used[branchId][lampKey]) ? state.used[branchId][lampKey] : 0;
+      const hint = document.getElementById('collect-available-hint');
+      hint.innerText = `משומשות הממתינות בסניף: ${count} יחידות`;
+      
+      const qtyInput = document.getElementById('collect-quantity-input');
+      qtyInput.max = count > 0 ? count : 1;
+      qtyInput.value = count > 0 ? count : 1;
+    }
+
+    // FORM HANDLERS (No alert/confirm used)
+
+    // 1. Add Stock to Warehouse
+    function handleAddStock(e) {
+      e.preventDefault();
+      const lampKey = document.getElementById('add-model-select').value;
+      const qty = parseInt(document.getElementById('add-quantity-input').value, 10);
+      const notes = document.getElementById('add-notes-input').value.trim();
+
+      if (qty <= 0) return;
+
+      if (!state.active['herzliya']) state.active['herzliya'] = {};
+      state.active['herzliya'][lampKey] = (state.active['herzliya'][lampKey] || 0) + qty;
+
+      state.history.unshift({
+        id: Date.now(),
+        time: new Date().toLocaleString('he-IL'),
+        type: 'add_stock',
+        typeBadge: 'קליטה למחסן',
+        badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+        site: 'מחסן הרצליה',
+        lamp: LAMP_NAMES[lampKey],
+        qty: qty,
+        notes: notes || 'קליטת מלאי חדש'
+      });
+
+      saveState();
+      closeModal('modal-add-stock');
+      showToast(`נוספו בהצלחה ${qty} יח' מנורות ${LAMP_NAMES[lampKey]} למחסן הרצליה!`, true);
+      document.getElementById('add-notes-input').value = '';
+    }
+
+    // 2. Transfer from Warehouse to Branch
+    function handleTransfer(e) {
+      e.preventDefault();
+      const branchId = document.getElementById('transfer-branch-select').value;
+      const lampKey = document.getElementById('transfer-model-select').value;
+      const qty = parseInt(document.getElementById('transfer-quantity-input').value, 10);
+      const notes = document.getElementById('transfer-notes-input').value.trim();
+
+      const whCurrent = (state.active['herzliya'] && state.active['herzliya'][lampKey]) ? state.active['herzliya'][lampKey] : 0;
+      
+      if (qty > whCurrent) {
+        showToast(`שגיאה: במחסן הרצליה יש רק ${whCurrent} יח' מנורות מדגם ${LAMP_NAMES[lampKey]} (מבוקש: ${qty})`, false);
+        return;
+      }
+
+      // Deduct from Warehouse, Add to Branch
+      state.active['herzliya'][lampKey] -= qty;
+      if (!state.active[branchId]) state.active[branchId] = {};
+      state.active[branchId][lampKey] = (state.active[branchId][lampKey] || 0) + qty;
+
+      const branchName = LOCATIONS.find(l => l.id === branchId).name;
+
+      state.history.unshift({
+        id: Date.now(),
+        time: new Date().toLocaleString('he-IL'),
+        type: 'transfer',
+        typeBadge: 'העברה לסניף',
+        badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+        site: `${branchName} (מהרצליה)`,
+        lamp: LAMP_NAMES[lampKey],
+        qty: qty,
+        notes: notes || 'העברת מלאי סניפי'
+      });
+
+      saveState();
+      closeModal('modal-transfer');
+      showToast(`הועברו בהצלחה ${qty} יח' ${LAMP_NAMES[lampKey]} אל ${branchName}!`, true);
+      document.getElementById('transfer-notes-input').value = '';
+    }
+
+    // 3. Report Replacement in Branch
+    function handleReplace(e) {
+      e.preventDefault();
+      const branchId = document.getElementById('replace-branch-select').value;
+      const lampKey = document.getElementById('replace-model-select').value;
+      const hall = document.getElementById('replace-hall-input').value.trim();
+      const reason = document.getElementById('replace-reason-input').value.trim();
+
+      const branchActive = (state.active[branchId] && state.active[branchId][lampKey]) ? state.active[branchId][lampKey] : 0;
+      const branchName = LOCATIONS.find(l => l.id === branchId).name;
+
+      if (branchActive < 1) {
+        showToast(`לא ניתן לדווח: בסניף ${branchName} אין מלאי תקין זמין מדגם ${LAMP_NAMES[lampKey]} לגריעה!`, false);
+        return;
+      }
+
+      // 1. Deduct 1 from Active Stock
+      state.active[branchId][lampKey] -= 1;
+
+      // 2. Add 1 to Used Stock
+      if (!state.used[branchId]) state.used[branchId] = {};
+      state.used[branchId][lampKey] = (state.used[branchId][lampKey] || 0) + 1;
+
+      // 3. Log History
+      state.history.unshift({
+        id: Date.now(),
+        time: new Date().toLocaleString('he-IL'),
+        type: 'replacement',
+        typeBadge: 'החלפה בסניף',
+        badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+        site: branchName,
+        lamp: LAMP_NAMES[lampKey],
+        qty: 1,
+        notes: `${hall} • ${reason || 'החלפה שוטפת'}`
+      });
+
+      saveState();
+      closeModal('modal-replace');
+      showToast(`דיווח נרשם: נגרעה 1 יח' תקינה והתווספה לרשימת האיסוף ב-${branchName}`, true);
+      document.getElementById('replace-hall-input').value = '';
+      document.getElementById('replace-reason-input').value = '';
+    }
+
+    // 4. Collect Used Lamps
+    function handleCollect(e) {
+      e.preventDefault();
+      const branchId = document.getElementById('collect-branch-select').value;
+      const lampKey = document.getElementById('collect-model-select').value;
+      const qty = parseInt(document.getElementById('collect-quantity-input').value, 10);
+      const dest = document.getElementById('collect-dest-input').value.trim();
+
+      const currentUsed = (state.used[branchId] && state.used[branchId][lampKey]) ? state.used[branchId][lampKey] : 0;
+      const branchName = LOCATIONS.find(l => l.id === branchId).name;
+
+      if (currentUsed < qty) {
+        showToast(`שגיאה: בסניף ${branchName} יש רק ${currentUsed} יח' משומשות בהמתנה מדגם זה`, false);
+        return;
+      }
+
+      state.used[branchId][lampKey] -= qty;
+
+      state.history.unshift({
+        id: Date.now(),
+        time: new Date().toLocaleString('he-IL'),
+        type: 'collection',
+        typeBadge: 'איסוף משומשות',
+        badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+        site: branchName,
+        lamp: LAMP_NAMES[lampKey],
+        qty: qty,
+        notes: dest || 'איסוף ופינוי מהסניף'
+      });
+
+      saveState();
+      closeModal('modal-collect');
+      showToast(`נאספו ${qty} יח' משומשות מ-${branchName} (${dest})`, true);
+      document.getElementById('collect-dest-input').value = '';
+    }
+
+    function clearHistoryLog() {
+      state.history = [];
+      saveState();
+      showToast('יומן התנועות אופס בהצלחה', true);
+    }
+
+    // Export CSV with UTF-8 BOM
+    function exportToCSV() {
+      let csv = '\uFEFF';
+
+      csv += '=== דוח מלאי מנורות קסנון תקינות (חדשות) ===\r\n';
+      const activeHeaders = ['סניף / מיקום', 'סיווג'];
+      LAMP_KEYS.forEach(k => activeHeaders.push(LAMP_NAMES[k]));
+      activeHeaders.push('סה"כ');
+      csv += activeHeaders.join(',') + '\r\n';
+
+      LOCATIONS.forEach(loc => {
+        const row = [`"${loc.name}"`, `"${loc.badge}"`];
+        let sum = 0;
+        LAMP_KEYS.forEach(k => {
+          const val = (state.active[loc.id] && state.active[loc.id][k]) ? state.active[loc.id][k] : 0;
+          row.push(val);
+          sum += val;
+        });
+        row.push(sum);
+        csv += row.join(',') + '\r\n';
+      });
+
+      csv += '\r\n=== מנורות משומשות בהמתנה לאיסוף בסניפים ===\r\n';
+      const usedHeaders = ['סניף', 'סיווג'];
+      LAMP_KEYS.forEach(k => usedHeaders.push(LAMP_NAMES[k]));
+      usedHeaders.push('סה"כ לאיסוף');
+      csv += usedHeaders.join(',') + '\r\n';
+
+      LOCATIONS.filter(l => !l.isWarehouse).forEach(loc => {
+        const row = [`"${loc.name}"`, `"${loc.badge}"`];
+        let sum = 0;
+        LAMP_KEYS.forEach(k => {
+          const val = (state.used[loc.id] && state.used[loc.id][k]) ? state.used[loc.id][k] : 0;
+          row.push(val);
+          sum += val;
+        });
+        row.push(sum);
+        csv += row.join(',') + '\r\n';
+      });
+
+      csv += '\r\n=== יומן תנועות אחרונות ===\r\n';
+      csv += 'תאריך ושעה,סוג פעולה,מיקום,דגם מנורה,כמות,הערות\r\n';
+      state.history.forEach(h => {
+        csv += `"${h.time}","${h.typeBadge}","${h.site}","${h.lamp}",${h.qty},"${h.notes || ''}"\r\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const now = new Date();
+      const dateStamp = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+      link.setAttribute('href', url);
+      link.setAttribute('download', `מערך_מלאי_קסנון_${dateStamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function updateTimestamps() {
+      const now = new Date();
+      const pDate = document.getElementById('print-date');
+      const pTime = document.getElementById('print-time');
+      if (pDate) pDate.innerText = now.toLocaleDateString('he-IL');
+      if (pTime) pTime.innerText = now.toLocaleTimeString('he-IL');
+    }
+
+    // Init
+    window.onload = function() {
+      loadState();
+      populateSelects();
+      renderAll();
+    };
+  </script>
+</body>
+</html>
